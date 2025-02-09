@@ -1,15 +1,12 @@
-#ifndef APPARAT_NODE_ELEMENT_H_
-#define APPARAT_NODE_ELEMENT_H_
-#include <stddef.h>
-#include <stdbool.h>
-#include "element_fluxcalcs.h"
-#include "types.h"
+#ifndef APPARAT_STRUCTURES_H_
+#define APPARAT_STRUCTURES_H_
 #include "pvec.h"
+#include "types.h"
 
 #define ELEMENT_TYPE(name, dims, func, cons) ElementKind_ ## name,
 typedef enum ElementKind
 {
-    #include "tables/node_element.table.h"
+    #include "tables/structures.table.h"
 }
 ElementKind_E;
 #undef ELEMENT_TYPE
@@ -35,8 +32,4 @@ typedef struct Element
 }
 Element_S;
 
-unsigned int element_getDimensions(ElementKind_E element);
-
-bool connectNodes(Node_S *n1, Node_S *n2, Real_T *gain, ElementKind_E element);
-
-#endif // APPARAT_NODE_ELEMENT_H_
+#endif // APPARAT_STRUCTURES_H_
