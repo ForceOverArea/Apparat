@@ -27,15 +27,25 @@ typedef enum StructuresError
 StructuresError_E;
 #undef STRUCTURES_ERROR
 
+#define RUNTIME_ERROR(name, msg) RuntimeError_ ## name,
+typedef enum RuntimeError
+{
+    #include "tables/runtime_errors.table.h"
+}
+RuntimeError_E;
+#undef RUNTIME_ERROR
+
 typedef struct Node
 {
     Vector_S *inputs;   // elements connected to the input of this node 
     Vector_S *outputs;  // elements connected to the output of this node 
     void *lockedBy;     // pointer to element that locks this node. If NULL, then node is unlocked
     size_t dimension;   // dimension of the node's potential quantity
-    Real_T *potential;  // Buffer for potential if potential is a vector type
+    VQuant_S potential;  // Buffer for potential if potential is a vector type
 }
 Node_S;
+
+typedef RuntimeError_E (*FluxCallback_T)(void *, Node_S *, Node_S *, VQuant_S *);
 
 typedef struct Element
 {
@@ -43,8 +53,8 @@ typedef struct Element
     size_t dimension;   // dimension of the element's gain quantity
     Node_S *input;      // node connected to this element's input port
     Node_S *output;     // node connected to this element's output port
-    Real_T (*flux)(void *, void *); // callback function pointer for determining the flux through this element
-    Real_T *gain;       // Buffer for gain if gain is a vector type
+    FluxCallback_T flux; // callback function pointer for determining the flux through this element
+    VQuant_S gain;       // Buffer for gain if gain is a vector type
 }
 Element_S;
 
@@ -64,31 +74,31 @@ typedef struct Problem
 }
 Problem_S;
 
+typedef RuntimeError_E (*ElementConstructor_T)(Problem_S *,Node_S *, Node_S *, VQuant_S);
+
 typedef struct ElementConfig
 {
-    size_t dimensions;
-    void (*fluxCalc)(Element_S *, Node_S *, Node_S *, Real_T *);
-    void (*constructor)(Problem_S *, Node_S *, Node_S *, Real_T *);
+    bool connectToInput;
+    bool connectToOutput;
+    size_t dimension;
+    FluxCallback_T flux;
+    ElementConstructor_T constructor;
 }
 ElementConfig_S;
 
-// Arena creation functions
-
-// Creates a problem graph's memory region
+// Arena functions
 Problem_S *problem_create(size_t nodes, size_t elements, ArenaError_E *stat);
-// Destroys a problem's memory region
 ArenaError_E problem_destroy(Problem_S *p);
+Element_S *problem_allocateElement(Problem_S *p, ArenaError_E *stat);
 
-// Structures creation functions
-
-// Calls an element's constructor callback
+// Structures functions
 StructuresError_E structures_linkElement(
     Problem_S *p,   // A pointer to the problem's memory arena 
     size_t n1,      // 
     size_t n2, 
     ElementKind_E kind, 
-    Real_T *gain);
+    VQuant_S gain);
 
-StructuresError_E node_fluxDiscrepancy(Node_S *node, Real_T *flux);
+StructuresError_E node_fluxDiscrepancy(Node_S *node, VQuant_S *fluxDiscrep);
 
 #endif // APPARAT_STRUCTURES_H_

@@ -2,7 +2,7 @@
 #define APPARAT_ELEMENTS_COMMON_H_
 #include "structures.h"
 
-bool pointers_not_null(void *elem, void *inputNode, void *outputNode, Real_T *flux);
-bool dimensionsCorrect(size_t dim, Element_S *elem, Node_S *inputNode, Node_S *outputNode, Real_T *flux);
+bool pointers_not_null(void *elem, void *inputNode, void *outputNode);
+bool dimensionsCorrect(size_t dim, Element_S *elem, Node_S *inputNode, Node_S *outputNode);
 
 #endif // APPARAT_ELEMENTS_COMMON_H_

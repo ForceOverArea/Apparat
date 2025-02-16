@@ -1,14 +1,20 @@
-#include "elements.h"
 #include "elements_common.h"
+#include "vectormath.h"
 
-void resistor_fluxcalc(
-    Element_S *elem, 
+RuntimeError_E resistor_fluxcalc(
+    void *elem_ptr, 
     Node_S *inputNode, 
     Node_S *outputNode, 
-    Real_T *flux)
+    VQuant_S *flux)
 {
-    if (dimensionsCorrect(1, elem, inputNode, outputNode, flux))
+    Element_S *elem = elem_ptr;
+    if (dimensionsCorrect(1, elem, inputNode, outputNode))
     {
-        *flux = (outputNode->potential[0] - inputNode->potential[0]) / elem->gain[0];
+        *flux = elemwise_subtract(outputNode->potential, inputNode->potential);
+        *flux = elemwise_divide(*flux, elem->gain);
+    }
+    else
+    {
+        return RuntimeError_IncorrectDimensions;
     }
 }

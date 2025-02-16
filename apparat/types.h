@@ -3,6 +3,15 @@
 
 typedef double Real_T;
 
+typedef struct VQuant
+{
+    Real_T fst;
+    Real_T snd;
+    Real_T thd;
+    Real_T lst;
+}
+VQuant_S;
+
 typedef enum BitField
 {
     BitField_None     =  0, // 0b 00 00 00
