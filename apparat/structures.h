@@ -91,14 +91,4 @@ Problem_S *problem_create(size_t nodes, size_t elements, ArenaError_E *stat);
 ArenaError_E problem_destroy(Problem_S *p);
 Element_S *problem_allocateElement(Problem_S *p, ArenaError_E *stat);
 
-// Structures functions
-StructuresError_E structures_linkElement(
-    Problem_S *p,   // A pointer to the problem's memory arena 
-    size_t n1,      // 
-    size_t n2, 
-    ElementKind_E kind, 
-    VQuant_S gain);
-
-StructuresError_E node_fluxDiscrepancy(Node_S *node, VQuant_S *fluxDiscrep);
-
 #endif // APPARAT_STRUCTURES_H_

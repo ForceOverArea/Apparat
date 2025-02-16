@@ -1,4 +1,16 @@
+#include <stddef.h>
 #include "vectormath.h"
+
+void zero(VQuant_S *v)
+{
+    if (NULL != v)
+    {
+        v->fst = 0;
+        v->snd = 0;
+        v->thd = 0;
+        v->lst = 0;
+    }
+}
 
 VQuant_S elemwise_add(VQuant_S a, VQuant_S b)
 {

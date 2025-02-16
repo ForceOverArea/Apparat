@@ -1,3 +1,4 @@
+#include "elements.h"
 #include "elements_common.h"
 #include "vectormath.h"
 
@@ -17,4 +18,6 @@ RuntimeError_E resistor_fluxcalc(
     {
         return RuntimeError_IncorrectDimensions;
     }
+
+    return RuntimeError_Success;
 }
