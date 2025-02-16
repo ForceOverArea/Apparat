@@ -1,3 +1,4 @@
+#include <string.h>
 #include "elements.h"
 #include "elements_common.h"
 #include "vectormath.h"
@@ -9,38 +10,69 @@ ElementConfig_S ELEMENT_VTABLES[] =
 };
 #undef ELEMENT_TYPE
 
-bool pointers_not_null(
-    void *elem, 
-    void *inputNode, 
-    void *outputNode)
+StructuresError_E get_elementConfig(ElementKind_E kind, ElementConfig_S *cfg)
 {
-    return ((NULL != elem) && 
-        (NULL != inputNode) &&
-        (NULL != outputNode));
-}  
+    void *stat = NULL;
 
-bool dimensionsCorrect(
-    size_t dim,
-    Element_S *elem, 
-    Node_S *inputNode, 
-    Node_S *outputNode)
-{
-    if (!pointers_not_null(elem, inputNode, outputNode))
+    if (kind >= NUM_OF_ELEMENT_KINDS)
     {
-        return false;
+        return StructuresError_ElementConfigDoesNotExist;
     }
 
-    return ((dim == elem->dimension) &&
-        (elem->dimension == inputNode->dimension) &&
-        (inputNode->dimension == outputNode->dimension));
+    stat = memcpy(cfg, &(ELEMENT_VTABLES[kind]), sizeof (ElementConfig_S));
+
+    if (NULL == stat)
+    {
+        return StructuresError_FailedToCopyConfigData;
+    } 
+
+    return StructuresError_Success;
 }
 
-RuntimeError_E structures_linkElement(
-    Problem_S *p,   // A pointer to the problem's memory arena 
-    size_t n1,      // the index of the node to connect to the element's input
-    size_t n2,      // the index of the node to connect to the element's output
-    ElementKind_E kind, // the type of the element to use to connect 
-    VQuant_S gain)  // the gain to apply to the element
+/**
+ * Ensures that the given pointers are not NULL, reporting errors for which kind of 
+ * pointer was NULL (i.e. node or element pointer.)
+ */
+StructuresError_E pointers_not_null(Element_S *elem, Node_S *inputNode, Node_S *outputNode)
+{
+    if (NULL != elem)
+    {
+        return StructuresError_ElementPointerWasNull;
+    }
+    else if (NULL != inputNode && NULL != outputNode)
+    {
+        return StructuresError_NodePointerWasNull;
+    }
+
+    return StructuresError_Success;
+}  
+
+/**
+ * Ensures that the dimensions of the given nodes and elements are all in agreement to prevent
+ * miscalculations down the line. This function also NULL-checks its arguments, behaving like 
+ * `pointers_not_null` if a NULL pointer is found.
+ */
+StructuresError_E dimensionsCorrect(size_t dim, Element_S *elem, Node_S *inputNode, Node_S *outputNode)
+{
+    StructuresError_E stat = pointers_not_null(elem, inputNode, outputNode);
+
+    if (StructuresError_Success != stat)
+    {
+        return stat;
+    }
+
+    if (dim == elem->dimension && 
+        (elem->dimension == inputNode->dimension) && 
+        (inputNode->dimension == outputNode->dimension))
+    {
+        return StructuresError_IncorrectDimensions;
+    }
+
+    return StructuresError_Success;
+}
+
+
+RuntimeError_E structures_linkElement(Problem_S *p, size_t n1, size_t n2, ElementKind_E kind, VQuant_S gain)
 {
     ArenaError_E stat = ArenaError_Success;
     ElementConfig_S config;
@@ -101,7 +133,6 @@ RuntimeError_E structures_linkElement(
     return RuntimeError_Success;
 }
 
-// TODO: this should return a runtime error, not a structures error
 RuntimeError_E node_fluxDiscrepancy(Node_S *node, VQuant_S *fluxDiscrep)
 {
     Element_S *element;

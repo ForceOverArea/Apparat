@@ -3,7 +3,7 @@
 
 #define SIZEOF_VECTOR(n) (sizeof (Vector_S) + (sizeof (const void *) * (n)))
 
-Vector_S *vector_new()
+Vector_S *vector_new(void)
 {
     return malloc(SIZEOF_VECTOR(1));
 }

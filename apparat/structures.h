@@ -7,6 +7,7 @@
 typedef enum ElementKind
 {
     #include "tables/structures.table.h"
+    NUM_OF_ELEMENT_KINDS, // do not move this definition!!!
 }
 ElementKind_E;
 #undef ELEMENT_TYPE
@@ -37,10 +38,10 @@ RuntimeError_E;
 
 typedef struct Node
 {
-    Vector_S *inputs;   // elements connected to the input of this node 
-    Vector_S *outputs;  // elements connected to the output of this node 
-    void *lockedBy;     // pointer to element that locks this node. If NULL, then node is unlocked
-    size_t dimension;   // dimension of the node's potential quantity
+    Vector_S *inputs;    // elements connected to the input of this node 
+    Vector_S *outputs;   // elements connected to the output of this node 
+    void *lockedBy;      // pointer to element that locks this node. If NULL, then node is unlocked
+    size_t dimension;    // dimension of the node's potential quantity
     VQuant_S potential;  // Buffer for potential if potential is a vector type
 }
 Node_S;
@@ -49,10 +50,11 @@ typedef RuntimeError_E (*FluxCallback_T)(void *, Node_S *, Node_S *, VQuant_S *)
 
 typedef struct Element
 {
-    ElementKind_E kind; // enum value indicating what kind of element this is
-    size_t dimension;   // dimension of the element's gain quantity
-    Node_S *input;      // node connected to this element's input port
-    Node_S *output;     // node connected to this element's output port
+    ElementKind_E kind;  // enum value indicating what kind of element this is
+    size_t dimension;    // dimension of the element's gain quantity
+    Node_S *input;       // node connected to this element's input port
+    Node_S *output;      // node connected to this element's output port
+    Node_S *drivenNode;  // indicates which node's potential this element controls
     FluxCallback_T flux; // callback function pointer for determining the flux through this element
     VQuant_S gain;       // Buffer for gain if gain is a vector type
 }

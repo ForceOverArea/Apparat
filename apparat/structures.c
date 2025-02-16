@@ -46,6 +46,14 @@ Problem_S *problem_create(size_t nodes, size_t elements, ArenaError_E *stat)
     arena->n_elements = elements;
     arena->used_elements = 0U;
 
+    for (size_t i = 0; i < nodes; i++)
+    {
+        arena->arena[i].node.inputs = vector_new();
+        arena->arena[i].node.outputs = vector_new();
+
+        // TODO: add error handling logic here
+    }
+
     *stat = ArenaError_Success;
 
     return arena;
@@ -56,6 +64,20 @@ ArenaError_E problem_destroy(Problem_S *p)
     if (NULL == p)
     {
         return ArenaError_ArenaPointerWasNull;
+    }
+
+    for (size_t i = 0; i < p->n_nodes; i++)
+    {
+        Node_S n = p->arena[i].node;
+        if (NULL != n.inputs && NULL != n.outputs)
+        {
+            free(n.inputs);
+            free(n.outputs);
+        }
+        else 
+        {
+            
+        }
     }
 
     free(p);
