@@ -76,14 +76,11 @@ typedef struct Problem
 }
 Problem_S;
 
-typedef RuntimeError_E (*ElementConstructor_T)(Problem_S *,Node_S *, Node_S *, VQuant_S);
+typedef StructuresError_E (*ElementConstructor_T)(Problem_S *,Node_S *, Node_S *, VQuant_S);
 
 typedef struct ElementConfig
 {
-    bool connectToInput;
-    bool connectToOutput;
     size_t dimension;
-    FluxCallback_T flux;
     ElementConstructor_T constructor;
 }
 ElementConfig_S;

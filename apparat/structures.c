@@ -13,7 +13,7 @@ static inline ArenaError_E problem_getAvailableElementIndex(Problem_S *p, size_t
         return ArenaError_IndexPointerWasNull;
     }
     
-    *index = p->n_nodes;
+    *index = p->n_nodes + p->used_elements;
 
     return ArenaError_Success;
 }
@@ -21,6 +21,8 @@ static inline ArenaError_E problem_getAvailableElementIndex(Problem_S *p, size_t
 // 
 Problem_S *problem_create(size_t nodes, size_t elements, ArenaError_E *stat)
 {
+    Node_S n;
+
     if (NULL == stat)
     {
         return NULL;
@@ -35,7 +37,10 @@ Problem_S *problem_create(size_t nodes, size_t elements, ArenaError_E *stat)
         *stat = ArenaError_NoElementsRequested;
     }
     
-    Problem_S *arena = malloc(sizeof (Problem_S) + (sizeof (ProblemObject_U) * (nodes + elements)));
+    Problem_S *arena = malloc(
+        sizeof (Problem_S) + 
+        (sizeof (ProblemObject_U) * (nodes + elements))
+    );
 
     if (NULL == arena)
     {
@@ -48,10 +53,14 @@ Problem_S *problem_create(size_t nodes, size_t elements, ArenaError_E *stat)
 
     for (size_t i = 0; i < nodes; i++)
     {
-        arena->arena[i].node.inputs = vector_new();
-        arena->arena[i].node.outputs = vector_new();
-
-        // TODO: add error handling logic here
+        n = arena->arena[i].node;
+        n.inputs = vector_new();
+        n.outputs = vector_new();
+        
+        if (NULL == n.inputs || NULL == n.outputs)
+        {
+            *stat = ArenaError_ArenaAllocationFailed;
+        }
     }
 
     *stat = ArenaError_Success;
@@ -61,6 +70,8 @@ Problem_S *problem_create(size_t nodes, size_t elements, ArenaError_E *stat)
 
 ArenaError_E problem_destroy(Problem_S *p)
 {
+    Node_S n;
+
     if (NULL == p)
     {
         return ArenaError_ArenaPointerWasNull;
@@ -68,16 +79,15 @@ ArenaError_E problem_destroy(Problem_S *p)
 
     for (size_t i = 0; i < p->n_nodes; i++)
     {
-        Node_S n = p->arena[i].node;
-        if (NULL != n.inputs && NULL != n.outputs)
+        n = p->arena[i].node;
+        
+        if (NULL == n.inputs || NULL == n.outputs)
         {
-            free(n.inputs);
-            free(n.outputs);
+            return ArenaError_FailedToFreeArena;
         }
-        else 
-        {
-            
-        }
+
+        free(n.inputs);
+        free(n.outputs);
     }
 
     free(p);
@@ -87,23 +97,35 @@ ArenaError_E problem_destroy(Problem_S *p)
 
 Element_S *problem_allocateElement(Problem_S *p, ArenaError_E *stat)
 {
+    ArenaError_E stat2;
+    size_t elemIndex = 0U;
+
     if (NULL == p)
     {
         *stat = ArenaError_ArenaPointerWasNull;
+        return NULL;
     }
     else if (NULL == stat)
     {
         *stat = ArenaError_StatPointerWasNull;
+        return NULL;
     }
     else if (p->used_elements >= p->n_elements)
     {
         *stat = ArenaError_InsufficientMemory;
+        return NULL;
     }
 
-    *stat = ArenaError_Success;
-    Element_S *result = &(p->arena[p->used_elements].element);
+    *stat = problem_getAvailableElementIndex(p, &elemIndex);
+    if (ArenaError_Success != (*stat))
+    {
+        return NULL;
+    }
+
+    Element_S *result = &(p->arena[elemIndex].element);
     p->used_elements++;
 
+    *stat = ArenaError_Success;
     return result;
 }
 

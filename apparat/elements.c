@@ -37,6 +37,44 @@ RuntimeError_E resistor_fluxcalc(void *elem_ptr, Node_S *inputNode, Node_S *outp
     return RuntimeError_Success;
 }
 
+StructuresError_E resistor_new(Problem_S *p, Node_S *n1, Node_S *n2, VQuant_S gain)
+{
+    ArenaError_E stat;
+    Element_S *elem  = NULL;
+
+    if (NULL == p)
+    {
+        return StructuresError_ProblemPointerWasNull;
+    }
+    else if (NULL == n1 || NULL == n2)
+    {
+        return StructuresError_NodePointerWasNull;
+    }
+
+    elem = problem_allocateElement(p, &stat);
+    if (ArenaError_Success != stat)
+    {
+        // we have already NULL-checked both pointers, only return errors for failed allocation
+        return StructuresError_InsufficientMemory;
+    }
+
+    elem->kind = ElementKind_Resistor;
+    elem->dimension = 1U;
+    elem->input = n1;
+    elem->output = n2;
+    elem->drivenNode = NULL;
+    elem->flux = &resistor_fluxcalc;
+    elem->gain = gain;
+
+    if (!vector_pushBack(&(n1->outputs), elem) ||
+        !vector_pushBack(&(n2->inputs), elem))
+    {
+        return StructuresError_FailedToLinkElement;
+    }
+
+    return StructuresError_Success;
+}
+
 RuntimeError_E voltage_fluxcalc(void *elem_ptr, Node_S *inputNode, Node_S *outputNode, VQuant_S *flux)
 {
     Element_S *elem = elem_ptr;
@@ -51,7 +89,7 @@ RuntimeError_E voltage_fluxcalc(void *elem_ptr, Node_S *inputNode, Node_S *outpu
 
     stat = get_elementConfig(elem->kind, &config);
 
-    if (elem->drivesOutput)
+    
 
     return RuntimeError_Success;
 }
