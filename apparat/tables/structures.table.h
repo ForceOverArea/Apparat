@@ -6,6 +6,6 @@
 //       arguments must be defined in a header file, ideally element_fluxcalcs
 //
 //           name       config
-ELEMENT_TYPE(Resistor,  resistor_config)
-// ELEMENT_TYPE(Voltage,   )
-// ELEMENT_TYPE(Current,   )
+ELEMENT_TYPE(Resistor,  RESISTOR_CONFIG)
+ELEMENT_TYPE(Voltage,   VOLTAGE_CONFIG)
+ELEMENT_TYPE(Current,   CURRENT_CONFIG)

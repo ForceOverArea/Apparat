@@ -46,16 +46,12 @@ typedef struct Node
 }
 Node_S;
 
-typedef RuntimeError_E (*FluxCallback_T)(void *, Node_S *, Node_S *, VQuant_S *);
-
 typedef struct Element
 {
     ElementKind_E kind;  // enum value indicating what kind of element this is
-    size_t dimension;    // dimension of the element's gain quantity
     Node_S *input;       // node connected to this element's input port
     Node_S *output;      // node connected to this element's output port
     Node_S *drivenNode;  // indicates which node's potential this element controls
-    FluxCallback_T flux; // callback function pointer for determining the flux through this element
     VQuant_S gain;       // Buffer for gain if gain is a vector type
 }
 Element_S;
@@ -76,12 +72,15 @@ typedef struct Problem
 }
 Problem_S;
 
+typedef RuntimeError_E (*FluxCallback_T)(Element_S *, Node_S *, Node_S *, VQuant_S *);
+
 typedef StructuresError_E (*ElementConstructor_T)(Problem_S *,Node_S *, Node_S *, VQuant_S);
 
 typedef struct ElementConfig
 {
-    size_t dimension;
     ElementConstructor_T constructor;
+    FluxCallback_T flux;
+    size_t dimensionality;
 }
 ElementConfig_S;
 

@@ -10,7 +10,7 @@ ElementConfig_S ELEMENT_VTABLES[] =
 };
 #undef ELEMENT_TYPE
 
-StructuresError_E get_elementConfig(ElementKind_E kind, ElementConfig_S *cfg)
+StructuresError_E element_getConfig(ElementKind_E kind, ElementConfig_S *cfg)
 {
     void *stat = NULL;
 
@@ -33,7 +33,7 @@ StructuresError_E get_elementConfig(ElementKind_E kind, ElementConfig_S *cfg)
  * Ensures that the given pointers are not NULL, reporting errors for which kind of 
  * pointer was NULL (i.e. node or element pointer.)
  */
-StructuresError_E pointers_not_null(Element_S *elem, Node_S *inputNode, Node_S *outputNode)
+StructuresError_E pointersNotNull(Element_S *elem, Node_S *inputNode, Node_S *outputNode)
 {
     if (NULL != elem)
     {
@@ -50,19 +50,26 @@ StructuresError_E pointers_not_null(Element_S *elem, Node_S *inputNode, Node_S *
 /**
  * Ensures that the dimensions of the given nodes and elements are all in agreement to prevent
  * miscalculations down the line. This function also NULL-checks its arguments, behaving like 
- * `pointers_not_null` if a NULL pointer is found.
+ * `pointersNotNull` if a NULL pointer is found.
  */
 StructuresError_E dimensionsCorrect(size_t dim, Element_S *elem, Node_S *inputNode, Node_S *outputNode)
 {
-    StructuresError_E stat = pointers_not_null(elem, inputNode, outputNode);
+    StructuresError_E stat = pointersNotNull(elem, inputNode, outputNode);
 
     if (StructuresError_Success != stat)
     {
         return stat;
     }
 
-    if (dim == elem->dimension && 
-        (elem->dimension == inputNode->dimension) && 
+    ElementConfig_S cfg;
+    stat = element_getConfig(elem->kind, &cfg);
+    if (StructuresError_Success != stat)
+    {
+        return stat;
+    }
+
+    if (dim == cfg.dimensionality && 
+        (cfg.dimensionality == inputNode->dimension) && 
         (inputNode->dimension == outputNode->dimension))
     {
         return StructuresError_IncorrectDimensions;
@@ -71,73 +78,11 @@ StructuresError_E dimensionsCorrect(size_t dim, Element_S *elem, Node_S *inputNo
     return StructuresError_Success;
 }
 
-
-RuntimeError_E structures_linkElement(Problem_S *p, size_t n1, size_t n2, ElementKind_E kind, VQuant_S gain)
-{
-    ArenaError_E stat = ArenaError_Success;
-    ElementConfig_S config;
-    Element_S *element;
-    Node_S *inputNode;
-    Node_S *outputNode;
-
-    if (NULL == p)
-    {
-        return RuntimeError_ProblemPointerWasNull;
-    }
-
-    config = ELEMENT_VTABLES[kind];
-    element = problem_allocateElement(p, &stat);
-    inputNode = &(p->arena[n1].node);
-    outputNode = &(p->arena[n2].node);
-
-    if ((ArenaError_Success == stat) && (NULL != element))
-    {
-        // connect element from n1 to n2
-        element->kind       = kind;
-        element->dimension  = config.dimension;
-        element->flux       = config.flux;
-        element->gain       = gain;
-        element->input      = inputNode;
-        element->output     = outputNode;
-
-        // connect nodes to element where it makes sense
-        if (config.connectToOutput)
-        {
-            if (!vector_pushBack(&(outputNode->inputs), element))
-            {
-                return RuntimeError_FailedToLinkElement;
-            }
-        }
-        
-        if (config.connectToInput)
-        {
-            if (!vector_pushBack(&(inputNode->outputs), element))
-            {
-                return RuntimeError_FailedToLinkElement;
-            }
-        }
-    }
-    else // error reporting
-    {
-        switch (stat)
-        {
-        case ArenaError_InsufficientMemory:
-            return RuntimeError_InsufficientMemory;
-            break;
-        default:
-            return RuntimeError_UnknownErrorOccurred;
-            break;
-        }
-    }
-
-    return RuntimeError_Success;
-}
-
 RuntimeError_E node_fluxDiscrepancy(Node_S *node, VQuant_S *fluxDiscrep)
 {
     Element_S *element;
-    Node_S *inputNode;
-    Node_S *outputNode;
+    ElementConfig_S cfg;
+    StructuresError_E stat;
     VQuant_S temp;
 
     if (NULL == node)
@@ -155,11 +100,15 @@ RuntimeError_E node_fluxDiscrepancy(Node_S *node, VQuant_S *fluxDiscrep)
     for (size_t i = 0; i < node->inputs->length; i++)
     {
         element = (Element_S*)(node->inputs->elements[i]);
-        inputNode = element->input;
-        outputNode = element->output;
+        stat = element_getConfig(element->kind, &cfg);
         
+        if (StructuresError_Success != stat)
+        {
+            
+        }
+
         zero(&temp);
-        element->flux((void *)element, inputNode, outputNode, &temp);
+        cfg.flux(element, element->input, element->output, &temp);
         *fluxDiscrep = elemwise_add(*fluxDiscrep, temp);
     }
 
@@ -167,11 +116,15 @@ RuntimeError_E node_fluxDiscrepancy(Node_S *node, VQuant_S *fluxDiscrep)
     for (size_t i = 0; i < node->outputs->length; i++)
     {
         element = (Element_S*)(node->outputs->elements[i]);
-        inputNode = element->input;
-        outputNode = element->output;
-        
+        stat = element_getConfig(element->kind, &cfg);
+
+        if (StructuresError_Success != stat)
+        {
+            return translateStructuresErrorToRuntimeError(stat);
+        }
+
         zero(&temp);
-        element->flux((void *)element, inputNode, outputNode, &temp);
+        cfg.flux(element, element->input, element->output, &temp);
         *fluxDiscrep = elemwise_subtract(*fluxDiscrep, temp);
     }
 

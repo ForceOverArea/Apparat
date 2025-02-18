@@ -37,10 +37,7 @@ Problem_S *problem_create(size_t nodes, size_t elements, ArenaError_E *stat)
         *stat = ArenaError_NoElementsRequested;
     }
     
-    Problem_S *arena = malloc(
-        sizeof (Problem_S) + 
-        (sizeof (ProblemObject_U) * (nodes + elements))
-    );
+    Problem_S *arena = malloc(sizeof (Problem_S) + (sizeof (ProblemObject_U) * (nodes + elements)));
 
     if (NULL == arena)
     {

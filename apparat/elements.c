@@ -87,9 +87,62 @@ RuntimeError_E voltage_fluxcalc(void *elem_ptr, Node_S *inputNode, Node_S *outpu
         return translateStructuresErrorToRuntimeError(stat);
     }
 
-    stat = get_elementConfig(elem->kind, &config);
+    stat = element_getConfig(elem->kind, &config);
 
     
 
     return RuntimeError_Success;
+}
+
+StructuresError_E voltage_new(Problem_S *p, Node_S *n1, Node_S *n2, VQuant_S gain)
+{
+    ArenaError_E stat;
+    Element_S *elem  = NULL;
+
+    if (NULL == p)
+    {
+        return StructuresError_ProblemPointerWasNull;
+    }
+    else if (NULL == n1 || NULL == n2)
+    {
+        return StructuresError_NodePointerWasNull;
+    }
+
+    elem = problem_allocateElement(p, &stat);
+    if (ArenaError_Success != stat)
+    {
+        // we have already NULL-checked both pointers, only return errors for failed allocation
+        return StructuresError_InsufficientMemory;
+    }
+
+    elem->kind = ElementKind_Voltage;
+    elem->dimension = 1U;
+    elem->input = n1;
+    elem->output = n2;
+    elem->drivenNode = NULL;
+    elem->flux = &voltage_fluxcalc;
+    elem->gain = gain;
+
+    if (NULL != n2->lockedBy)
+    {
+        n2->lockedBy = elem;
+        if (!vector_pushBack(&(n1->outputs), (void *)elem))
+        {
+            return StructuresError_FailedToLinkElement;
+        }
+    }
+    else if (NULL != n1->lockedBy)
+    {
+        n1->lockedBy = elem;
+        if (!vector_pushBack(&(n2->inputs), (void *)elem))
+        {
+            return StructuresError_FailedToLinkElement;
+        }
+    }
+    else 
+    {
+        return StructuresError_NodePointerWasNull
+    }
+
+    return StructuresError_Success;
 }
