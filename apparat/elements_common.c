@@ -10,7 +10,7 @@ ElementConfig_S ELEMENT_VTABLES[] =
 };
 #undef ELEMENT_TYPE
 
-StructuresError_E element_getConfig(ElementKind_E kind, ElementConfig_S *cfg)
+ApparatError_E element_getConfig(ElementKind_E kind, ElementConfig_S *cfg)
 {
     void *stat = NULL;
 
@@ -26,14 +26,14 @@ StructuresError_E element_getConfig(ElementKind_E kind, ElementConfig_S *cfg)
         return StructuresError_FailedToCopyConfigData;
     } 
 
-    return StructuresError_Success;
+    return CommonError_Success;
 }
 
 /**
  * Ensures that the given pointers are not NULL, reporting errors for which kind of 
  * pointer was NULL (i.e. node or element pointer.)
  */
-StructuresError_E pointersNotNull(Element_S *elem, Node_S *inputNode, Node_S *outputNode)
+ApparatError_E pointersNotNull(Element_S *elem, Node_S *inputNode, Node_S *outputNode)
 {
     if (NULL != elem)
     {
@@ -44,7 +44,7 @@ StructuresError_E pointersNotNull(Element_S *elem, Node_S *inputNode, Node_S *ou
         return StructuresError_NodePointerWasNull;
     }
 
-    return StructuresError_Success;
+    return CommonError_Success;
 }  
 
 /**
@@ -52,21 +52,14 @@ StructuresError_E pointersNotNull(Element_S *elem, Node_S *inputNode, Node_S *ou
  * miscalculations down the line. This function also NULL-checks its arguments, behaving like 
  * `pointersNotNull` if a NULL pointer is found.
  */
-StructuresError_E dimensionsCorrect(size_t dim, Element_S *elem, Node_S *inputNode, Node_S *outputNode)
+ApparatError_E dimensionsCorrect(size_t dim, Element_S *elem, Node_S *inputNode, Node_S *outputNode)
 {
-    StructuresError_E stat = pointersNotNull(elem, inputNode, outputNode);
-
-    if (StructuresError_Success != stat)
-    {
-        return stat;
-    }
+    ApparatError_E stat = pointersNotNull(elem, inputNode, outputNode);
+    CHECK_STAT(stat)
 
     ElementConfig_S cfg;
     stat = element_getConfig(elem->kind, &cfg);
-    if (StructuresError_Success != stat)
-    {
-        return stat;
-    }
+    CHECK_STAT(stat)
 
     if (dim == cfg.dimensionality && 
         (cfg.dimensionality == inputNode->dimension) && 
@@ -75,14 +68,14 @@ StructuresError_E dimensionsCorrect(size_t dim, Element_S *elem, Node_S *inputNo
         return StructuresError_IncorrectDimensions;
     }
 
-    return StructuresError_Success;
+    return CommonError_Success;
 }
 
-RuntimeError_E node_fluxDiscrepancy(Node_S *node, VQuant_S *fluxDiscrep)
+ApparatError_E node_fluxDiscrepancy(Node_S *node, VQuant_S *fluxDiscrep)
 {
     Element_S *element;
     ElementConfig_S cfg;
-    StructuresError_E stat;
+    ApparatError_E stat;
     VQuant_S temp;
 
     if (NULL == node)
@@ -101,11 +94,7 @@ RuntimeError_E node_fluxDiscrepancy(Node_S *node, VQuant_S *fluxDiscrep)
     {
         element = (Element_S*)(node->inputs->elements[i]);
         stat = element_getConfig(element->kind, &cfg);
-        
-        if (StructuresError_Success != stat)
-        {
-            
-        }
+        CHECK_STAT(stat)
 
         zero(&temp);
         cfg.flux(element, element->input, element->output, &temp);
@@ -117,16 +106,12 @@ RuntimeError_E node_fluxDiscrepancy(Node_S *node, VQuant_S *fluxDiscrep)
     {
         element = (Element_S*)(node->outputs->elements[i]);
         stat = element_getConfig(element->kind, &cfg);
-
-        if (StructuresError_Success != stat)
-        {
-            return translateStructuresErrorToRuntimeError(stat);
-        }
+        CHECK_STAT(stat)
 
         zero(&temp);
         cfg.flux(element, element->input, element->output, &temp);
         *fluxDiscrep = elemwise_subtract(*fluxDiscrep, temp);
     }
 
-    return RuntimeError_Success;
+    return CommonError_Success;
 }

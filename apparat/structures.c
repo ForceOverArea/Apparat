@@ -1,8 +1,9 @@
 #include <stdlib.h>
+#include "apparat_errors.h"
 #include "structures.h"
 #include "elements.h"
 
-static inline ArenaError_E problem_getAvailableElementIndex(Problem_S *p, size_t *index)
+static inline ApparatError_E problem_getAvailableElementIndex(Problem_S *p, size_t *index)
 {
     if (NULL == p)
     {
@@ -15,11 +16,11 @@ static inline ArenaError_E problem_getAvailableElementIndex(Problem_S *p, size_t
     
     *index = p->n_nodes + p->used_elements;
 
-    return ArenaError_Success;
+    return CommonError_Success;
 }
 
 // 
-Problem_S *problem_create(size_t nodes, size_t elements, ArenaError_E *stat)
+Problem_S *problem_create(size_t nodes, size_t elements, ApparatError_E *stat)
 {
     Node_S n;
 
@@ -60,12 +61,12 @@ Problem_S *problem_create(size_t nodes, size_t elements, ArenaError_E *stat)
         }
     }
 
-    *stat = ArenaError_Success;
+    *stat = CommonError_Success;
 
     return arena;
 }
 
-ArenaError_E problem_destroy(Problem_S *p)
+ApparatError_E problem_destroy(Problem_S *p)
 {
     Node_S n;
 
@@ -89,12 +90,12 @@ ArenaError_E problem_destroy(Problem_S *p)
 
     free(p);
 
-    return ArenaError_Success;
+    return CommonError_Success;
 }
 
-Element_S *problem_allocateElement(Problem_S *p, ArenaError_E *stat)
+Element_S *problem_allocateElement(Problem_S *p, ApparatError_E *stat)
 {
-    ArenaError_E stat2;
+    ApparatError_E stat2;
     size_t elemIndex = 0U;
 
     if (NULL == p)
@@ -114,7 +115,7 @@ Element_S *problem_allocateElement(Problem_S *p, ArenaError_E *stat)
     }
 
     *stat = problem_getAvailableElementIndex(p, &elemIndex);
-    if (ArenaError_Success != (*stat))
+    if (CommonError_Success != (*stat))
     {
         return NULL;
     }
@@ -122,7 +123,7 @@ Element_S *problem_allocateElement(Problem_S *p, ArenaError_E *stat)
     Element_S *result = &(p->arena[elemIndex].element);
     p->used_elements++;
 
-    *stat = ArenaError_Success;
+    *stat = CommonError_Success;
     return result;
 }
 

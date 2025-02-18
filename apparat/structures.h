@@ -1,5 +1,6 @@
 #ifndef APPARAT_STRUCTURES_H_
 #define APPARAT_STRUCTURES_H_
+#include "apparat_errors.h"
 #include "pvec.h"
 #include "types.h"
 
@@ -11,30 +12,6 @@ typedef enum ElementKind
 }
 ElementKind_E;
 #undef ELEMENT_TYPE
-
-#define ARENA_ERROR(name, msg) ArenaError_ ## name,
-typedef enum ArenaError
-{
-    #include "tables/arena_errors.table.h"
-}
-ArenaError_E;
-#undef ARENA_ERROR
-
-#define STRUCTURES_ERROR(name, msg) StructuresError_ ## name,
-typedef enum StructuresError
-{
-    #include "tables/structures_errors.table.h"
-}
-StructuresError_E;
-#undef STRUCTURES_ERROR
-
-#define RUNTIME_ERROR(name, msg) RuntimeError_ ## name,
-typedef enum RuntimeError
-{
-    #include "tables/runtime_errors.table.h"
-}
-RuntimeError_E;
-#undef RUNTIME_ERROR
 
 typedef struct Node
 {
@@ -72,9 +49,9 @@ typedef struct Problem
 }
 Problem_S;
 
-typedef RuntimeError_E (*FluxCallback_T)(Element_S *, Node_S *, Node_S *, VQuant_S *);
+typedef ApparatError_E (*FluxCallback_T)(Element_S *, Node_S *, Node_S *, VQuant_S *);
 
-typedef StructuresError_E (*ElementConstructor_T)(Problem_S *,Node_S *, Node_S *, VQuant_S);
+typedef ApparatError_E (*ElementConstructor_T)(Problem_S *,Node_S *, Node_S *, VQuant_S);
 
 typedef struct ElementConfig
 {
@@ -85,8 +62,8 @@ typedef struct ElementConfig
 ElementConfig_S;
 
 // Arena functions
-Problem_S *problem_create(size_t nodes, size_t elements, ArenaError_E *stat);
-ArenaError_E problem_destroy(Problem_S *p);
-Element_S *problem_allocateElement(Problem_S *p, ArenaError_E *stat);
+Problem_S *problem_create(size_t nodes, size_t elements, ApparatError_E *stat);
+ApparatError_E problem_destroy(Problem_S *p);
+Element_S *problem_allocateElement(Problem_S *p, ApparatError_E *stat);
 
 #endif // APPARAT_STRUCTURES_H_
